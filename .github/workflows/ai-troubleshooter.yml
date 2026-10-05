@@ -34,8 +34,3 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python explainer.py "${{ github.repository }}" "${{ github.event.workflow_run.id }}"
-
-      - name: Test AI failure detection
-        run: |
-    echo "Testing AI failure detection"
-    exit 1
