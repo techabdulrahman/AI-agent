@@ -7,7 +7,9 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
+  pull-requests: write
 
 jobs:
   explain:
@@ -24,9 +26,16 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests google-genai
+        run: |
+          pip install requests google-genai
 
       - name: Run AI failure explainer
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          HEAD_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PR_NUMBER: ""
         run: python explain_failure.py
