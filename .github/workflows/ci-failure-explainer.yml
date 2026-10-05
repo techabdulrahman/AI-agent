@@ -1,44 +1,32 @@
 name: CI Failure Explainer
 
 on:
-  workflow_run:
-    workflows: ["CI"]          # <-- must match the `name:` of the workflow you want to watch
-    types: [completed]
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
-# Least privilege: read logs, write PR comments
 permissions:
-  actions: read
   contents: read
-  pull-requests: write
 
 jobs:
   explain:
-    # Only when CI failed on a pull request
-    if: >
-      github.event.workflow_run.conclusion == 'failure' &&
-      github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    steps:
-      # workflow_run executes on the default branch, so this is trusted code.
-      # Never check out the PR head here: logs/diffs are untrusted input.
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
 
       - name: Install dependencies
         run: pip install requests google-genai
 
-      - name: Explain failure and comment on PR
+      - name: Run AI failure explainer
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          REPO: ${{ github.repository }}
-          RUN_ID: ${{ github.event.workflow_run.id }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
-          RUN_URL: ${{ github.event.workflow_run.html_url }}
-        run: python scripts/explain_failure.py
+        run: python explain_failure.py
